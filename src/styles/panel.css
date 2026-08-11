@@ -486,3 +486,75 @@
 .fast-search-input::placeholder {
   color: rgba(255,255,255,0.3);
 }
+
+/* Mobile Navigation Bar (Hidden on Desktop) */
+.mobile-nav-bar {
+  display: none;
+}
+
+/* Responsive Overrides */
+@media (max-width: 768px) {
+  .panel-body {
+    flex-direction: column;
+    overflow-y: auto;
+    padding-bottom: 70px; /* Space for the bottom nav bar */
+  }
+
+  .panel-sidebar {
+    width: 100% !important;
+    max-height: 40vh; /* Allow it to be scrollable but leave room for workspace */
+    flex-shrink: 0;
+  }
+
+  .panel-workspace {
+    width: 100% !important;
+    flex: 1;
+    min-height: 50vh;
+  }
+
+  .panel-program {
+    display: none !important; /* Hide preview on mobile */
+  }
+
+  .resizer-x {
+    display: none !important;
+  }
+
+  /* Show and Style the Mobile Nav Bar */
+  .mobile-nav-bar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(15, 23, 42, 0.9);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border-subtle);
+    padding: 10px 16px;
+    justify-content: space-between;
+    gap: 16px;
+    z-index: 100;
+  }
+
+  .mobile-nav-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transition: background 0.2s;
+  }
+
+  .mobile-nav-btn:active {
+    background: var(--primary-hover);
+  }
+}

@@ -20,7 +20,12 @@ export interface LiveState {
   refFontSize: number;
   refPosition: 'top' | 'bottom';
   refAlign: 'left' | 'center' | 'right';
-  textTransform: 'none' | 'uppercase' | 'capitalize';
+  songTextTransform: 'none' | 'uppercase' | 'capitalize' | 'lowercase';
+  bibleTextTransform: 'none' | 'uppercase' | 'capitalize' | 'lowercase';
+  refTextTransform: 'none' | 'uppercase' | 'capitalize' | 'lowercase';
+  songFontWeight: string;
+  bibleFontWeight: string;
+  refFontWeight: string;
   paddingLR: number;
   lowerThirdWidth: number;
   refColor: string;
@@ -54,7 +59,12 @@ const defaultState: LiveState = {
   refFontSize: 2.5,
   refPosition: 'top',
   refAlign: 'left',
-  textTransform: 'none',
+  songTextTransform: 'none',
+  bibleTextTransform: 'none',
+  refTextTransform: 'none',
+  songFontWeight: '600',
+  bibleFontWeight: '600',
+  refFontWeight: 'bold',
   paddingLR: 5,
   lowerThirdWidth: 78,
   refColor: '#FFFFFF',

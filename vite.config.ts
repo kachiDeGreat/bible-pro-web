@@ -9,8 +9,7 @@ import { IncomingForm } from 'formidable'
 let sseClients: any[] = [];
 let currentLiveState: any = null;
 
-// Send a ping every 10 seconds to keep the SSE connection alive in OBS
-// We send a named event 'ping' so the client can listen for it and verify connection health.
+
 setInterval(() => {
   sseClients.forEach(client => {
     client.write('event: ping\ndata: {}\n\n');
@@ -24,12 +23,10 @@ function localMediaServer() {
   return {
     name: 'local-media-server',
     configureServer(server: ViteDevServer) {
-      // WebSocket integration for ultra-fast, limit-free syncing
       server.ws.on('bible-song-pro:update', (data) => {
         currentLiveState = data;
         server.ws.send('bible-song-pro:state', currentLiveState);
         
-        // Also sync to any SSE clients just in case
         sseClients.forEach(client => {
           client.write(`data: ${JSON.stringify(currentLiveState)}\n\n`);
           if (client.flush) client.flush();
@@ -96,15 +93,13 @@ function localMediaServer() {
 
       server.middlewares.use('/api/upload', (req, res, next) => {
         if (req.method === 'POST') {
-          // Use process.cwd() or import.meta.dirname to avoid the Vite warning
           const uploadDir = path.resolve(process.cwd(), 'public/uploads');
           const form = new IncomingForm({
             uploadDir,
             keepExtensions: true,
-            maxFileSize: 500 * 1024 * 1024, // 500MB
+            maxFileSize: 500 * 1024 * 1024,
           });
 
-          // Ensure directory exists
           if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
           }
@@ -116,7 +111,6 @@ function localMediaServer() {
               return;
             }
             
-            // Get the first uploaded file (could be an array depending on formidable version)
             const fileArray = Array.isArray(files.file) ? files.file : [files.file];
             const file = fileArray[0];
             
@@ -177,9 +171,9 @@ for (const devName in interfaces) {
 export default defineConfig({
   plugins: [react(), localMediaServer(), qrcode()],
   server: {
-    host: true, // Listen on all local IPs (needed for mobile phone to connect)
-    open: `http://${localIp}:5173`, // Automatically open the browser to the network IP
-    port: 5173,
+    host: true, 
+    open: `http://${localIp}:5177`,
+    port: 5177,
     strictPort: true
   }
 })

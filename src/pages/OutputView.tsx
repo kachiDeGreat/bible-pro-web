@@ -97,7 +97,8 @@ const OutputView = () => {
                   fontFamily: liveState.fontFamily,
                   margin: 0,
                   marginBottom: '0.5vw',
-                  textTransform: liveState.textTransform !== 'none' ? liveState.textTransform : undefined
+                  textTransform: liveState.refTextTransform !== 'none' ? (liveState.refTextTransform as any) : undefined,
+                  fontWeight: liveState.refFontWeight
                 }}
               >
                 {liveState.title}
@@ -114,7 +115,10 @@ const OutputView = () => {
                 fontFamily: liveState.fontFamily,
                 whiteSpace: 'pre-wrap',
                 lineHeight: 1.3,
-                textTransform: liveState.type === 'song' ? liveState.textTransform : 'none'
+                textTransform: liveState.type === 'song' 
+                  ? (liveState.songTextTransform !== 'none' ? liveState.songTextTransform as any : undefined)
+                  : (liveState.bibleTextTransform !== 'none' ? liveState.bibleTextTransform as any : undefined),
+                fontWeight: liveState.type === 'song' ? liveState.songFontWeight : liveState.bibleFontWeight
               }}
             >
               {liveState.text}
@@ -131,7 +135,8 @@ const OutputView = () => {
                   fontFamily: liveState.fontFamily,
                   margin: 0,
                   marginTop: '0.5vw',
-                  textTransform: liveState.textTransform !== 'none' ? liveState.textTransform : undefined
+                  textTransform: liveState.refTextTransform !== 'none' ? (liveState.refTextTransform as any) : undefined,
+                  fontWeight: liveState.refFontWeight
                 }}
               >
                 {liveState.title}

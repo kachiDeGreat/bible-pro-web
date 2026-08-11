@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import toast from "react-hot-toast";
 import {
   Settings,
   MonitorPlay,
@@ -12,6 +13,8 @@ import {
   Play,
   X,
   Loader,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import "../styles/panel.css";
 import { bibleService, BibleVersion, Verse } from "../services/bibleService";
@@ -98,7 +101,7 @@ export default function ControlPanel() {
       }
     } catch (err) {
       console.error("Failed to save media", err);
-      alert(
+      toast.error(
         "Failed to save media to local server. Make sure you restarted the dev server.",
       );
     }
@@ -206,10 +209,10 @@ export default function ControlPanel() {
         const id = "bible_" + Date.now();
         const name = file.name.replace(".xml", "");
         await bibleService.parseZefaniaXML(text, id, name);
-        alert(`Successfully imported ${name}!`);
+        toast.success(`Successfully imported ${name}!`);
         loadBibles();
       } catch (err) {
-        alert("Failed to parse Zefania XML. Make sure it is valid.");
+        toast.error("Failed to parse Zefania XML. Make sure it is valid.");
         console.error(err);
       }
     };
@@ -233,7 +236,7 @@ export default function ControlPanel() {
       try {
         await addSong(songName, "Unknown", text);
         loadSongs();
-        import("react-hot-toast").then(module => module.toast.success(`Imported and saved ${songName}`));
+        toast.success(`Imported and saved ${songName}`);
       } catch(err) {
         console.error("Failed to save imported song to local DB", err);
       }
@@ -257,15 +260,15 @@ export default function ControlPanel() {
         try {
           await addSong(songSearchTitle, songSearchArtist || "Unknown", data.lyrics);
           loadSongs();
-          import("react-hot-toast").then(module => module.toast.success(`Found and saved ${songSearchTitle}`));
+          toast.success(`Found and saved ${songSearchTitle}`);
         } catch(err) {
           console.error("Failed to save searched song to local DB", err);
         }
       } else {
-        alert("Lyrics not found. Please try another song or artist.");
+        toast.error("Lyrics not found. Please try another song or artist.");
       }
     } catch (err) {
-      alert("Error fetching lyrics. The API might be down.");
+      toast.error("Error fetching lyrics. The API might be down.");
     } finally {
       setIsSearchingSong(false);
     }
@@ -302,7 +305,7 @@ export default function ControlPanel() {
     (c) => c.number === Number(selectedChapterNum),
   );
 
-  const handleFastSearch = (query: string) => {
+  const handleFastSearch = (query: string, shouldProject: boolean = false) => {
     setFastSearchQuery(query);
     if (!activeBible || query.length < 3) return;
 
@@ -349,11 +352,13 @@ export default function ControlPanel() {
                 chap: chapNum,
                 verse: verseNum,
               });
-              projectLive({
-                type: "bible",
-                title: `${matchedBook.name} ${chapNum}:${verseNum} (${activeBible.name})`,
-                text: matchedVerse.text,
-              });
+              if (shouldProject) {
+                projectLive({
+                  type: "bible",
+                  title: `${matchedBook.name} ${chapNum}:${verseNum} (${activeBible.name})`,
+                  text: matchedVerse.text,
+                });
+              }
             }
           }
         }
@@ -405,8 +410,59 @@ export default function ControlPanel() {
     }
   };
 
+  const goToNext = () => {
+    if (activeTab === "bible" && activeChapter && activeProjectedRef) {
+      const currentIndex = activeChapter.verses.findIndex(
+        (v) => v.number === activeProjectedRef.verse,
+      );
+      if (
+        currentIndex !== -1 &&
+        currentIndex < activeChapter.verses.length - 1
+      ) {
+        handleProjectVerse(activeChapter.verses[currentIndex + 1]);
+      }
+    } else if (
+      activeTab === "songs" &&
+      songChunks.length > 0 &&
+      activeSongChunkIndex !== null
+    ) {
+      if (activeSongChunkIndex < songChunks.length - 1) {
+        handleProjectSongChunk(
+          songChunks[activeSongChunkIndex + 1],
+          activeSongChunkIndex + 1,
+        );
+      }
+    }
+  };
+
+  const goToPrev = () => {
+    if (activeTab === "bible" && activeChapter && activeProjectedRef) {
+      const currentIndex = activeChapter.verses.findIndex(
+        (v) => v.number === activeProjectedRef.verse,
+      );
+      if (currentIndex > 0) {
+        handleProjectVerse(activeChapter.verses[currentIndex - 1]);
+      }
+    } else if (
+      activeTab === "songs" &&
+      songChunks.length > 0 &&
+      activeSongChunkIndex !== null
+    ) {
+      if (activeSongChunkIndex > 0) {
+        handleProjectSongChunk(
+          songChunks[activeSongChunkIndex - 1],
+          activeSongChunkIndex - 1,
+        );
+      }
+    }
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        handleClear();
+      }
+
       // Do not trigger if user is typing in an input or textarea
       if (
         e.target instanceof HTMLInputElement ||
@@ -416,48 +472,9 @@ export default function ControlPanel() {
       }
 
       if (e.key === "ArrowRight" || e.key === "ArrowDown") {
-        if (activeTab === "bible" && activeChapter && activeProjectedRef) {
-          const currentIndex = activeChapter.verses.findIndex(
-            (v) => v.number === activeProjectedRef.verse,
-          );
-          if (
-            currentIndex !== -1 &&
-            currentIndex < activeChapter.verses.length - 1
-          ) {
-            handleProjectVerse(activeChapter.verses[currentIndex + 1]);
-          }
-        } else if (
-          activeTab === "songs" &&
-          songChunks.length > 0 &&
-          activeSongChunkIndex !== null
-        ) {
-          if (activeSongChunkIndex < songChunks.length - 1) {
-            handleProjectSongChunk(
-              songChunks[activeSongChunkIndex + 1],
-              activeSongChunkIndex + 1,
-            );
-          }
-        }
+        goToNext();
       } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-        if (activeTab === "bible" && activeChapter && activeProjectedRef) {
-          const currentIndex = activeChapter.verses.findIndex(
-            (v) => v.number === activeProjectedRef.verse,
-          );
-          if (currentIndex > 0) {
-            handleProjectVerse(activeChapter.verses[currentIndex - 1]);
-          }
-        } else if (
-          activeTab === "songs" &&
-          songChunks.length > 0 &&
-          activeSongChunkIndex !== null
-        ) {
-          if (activeSongChunkIndex > 0) {
-            handleProjectSongChunk(
-              songChunks[activeSongChunkIndex - 1],
-              activeSongChunkIndex - 1,
-            );
-          }
-        }
+        goToPrev();
       }
     };
 
@@ -472,6 +489,16 @@ export default function ControlPanel() {
     handleProjectVerse,
     handleProjectSongChunk,
   ]);
+
+  useEffect(() => {
+    if (activeTab === "bible" && activeProjectedRef) {
+      const el = document.getElementById(`verse-${activeProjectedRef.verse}`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } else if (activeTab === "songs" && activeSongChunkIndex !== null) {
+      const el = document.getElementById(`song-chunk-${activeSongChunkIndex}`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [activeProjectedRef, activeSongChunkIndex, activeTab]);
 
   return (
     <div className="panel-layout">
@@ -568,28 +595,85 @@ export default function ControlPanel() {
                 </div>
               </div>
 
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "20px",
-                }}
-              >
-                <div className="control-group">
-                  <span className="control-label" style={{ fontWeight: 600 }}>
-                    Song Text Transform
-                  </span>
-                  <select
-                    className="input"
-                    value={liveState.textTransform}
-                    onChange={(e) =>
-                      projectLive({ textTransform: e.target.value as any })
-                    }
-                  >
-                    <option value="none">Normal (As Typed)</option>
-                    <option value="uppercase">ALL CAPS</option>
-                    <option value="capitalize">Capitalize Each Word</option>
-                  </select>
+              <div style={{ marginTop: "20px", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "20px" }}>
+                <h4 style={{ color: "white", marginBottom: "16px" }}>Typography Options</h4>
+                
+                {/* Song Typography */}
+                <div style={{ marginBottom: "16px", padding: "12px", background: "rgba(0,0,0,0.2)", borderRadius: "8px" }}>
+                  <span style={{ color: "white", fontWeight: 600, display: "block", marginBottom: "12px" }}>Song Lyrics</span>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+                    <div className="control-group">
+                      <span className="control-label">Transform</span>
+                      <select className="input" value={liveState.songTextTransform} onChange={(e) => projectLive({ songTextTransform: e.target.value as any })}>
+                        <option value="none">Normal</option>
+                        <option value="uppercase">UPPERCASE</option>
+                        <option value="lowercase">lowercase</option>
+                        <option value="capitalize">Capitalize</option>
+                      </select>
+                    </div>
+                    <div className="control-group">
+                      <span className="control-label">Weight</span>
+                      <select className="input" value={liveState.songFontWeight} onChange={(e) => projectLive({ songFontWeight: e.target.value })}>
+                        <option value="400">Normal</option>
+                        <option value="500">Medium</option>
+                        <option value="600">Semi-Bold</option>
+                        <option value="700">Bold</option>
+                        <option value="800">Extra-Bold</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bible Verse Typography */}
+                <div style={{ marginBottom: "16px", padding: "12px", background: "rgba(0,0,0,0.2)", borderRadius: "8px" }}>
+                  <span style={{ color: "white", fontWeight: 600, display: "block", marginBottom: "12px" }}>Bible Verses</span>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+                    <div className="control-group">
+                      <span className="control-label">Transform</span>
+                      <select className="input" value={liveState.bibleTextTransform} onChange={(e) => projectLive({ bibleTextTransform: e.target.value as any })}>
+                        <option value="none">Normal</option>
+                        <option value="uppercase">UPPERCASE</option>
+                        <option value="lowercase">lowercase</option>
+                        <option value="capitalize">Capitalize</option>
+                      </select>
+                    </div>
+                    <div className="control-group">
+                      <span className="control-label">Weight</span>
+                      <select className="input" value={liveState.bibleFontWeight} onChange={(e) => projectLive({ bibleFontWeight: e.target.value })}>
+                        <option value="400">Normal</option>
+                        <option value="500">Medium</option>
+                        <option value="600">Semi-Bold</option>
+                        <option value="700">Bold</option>
+                        <option value="800">Extra-Bold</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Reference Typography */}
+                <div style={{ marginBottom: "20px", padding: "12px", background: "rgba(0,0,0,0.2)", borderRadius: "8px" }}>
+                  <span style={{ color: "white", fontWeight: 600, display: "block", marginBottom: "12px" }}>Bible References</span>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+                    <div className="control-group">
+                      <span className="control-label">Transform</span>
+                      <select className="input" value={liveState.refTextTransform} onChange={(e) => projectLive({ refTextTransform: e.target.value as any })}>
+                        <option value="none">Normal</option>
+                        <option value="uppercase">UPPERCASE</option>
+                        <option value="lowercase">lowercase</option>
+                        <option value="capitalize">Capitalize</option>
+                      </select>
+                    </div>
+                    <div className="control-group">
+                      <span className="control-label">Weight</span>
+                      <select className="input" value={liveState.refFontWeight} onChange={(e) => projectLive({ refFontWeight: e.target.value })}>
+                        <option value="400">Normal</option>
+                        <option value="500">Medium</option>
+                        <option value="600">Semi-Bold</option>
+                        <option value="700">Bold</option>
+                        <option value="800">Extra-Bold</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1361,7 +1445,10 @@ export default function ControlPanel() {
                     className="fast-search-input"
                     placeholder="Fast Search (e.g. 'gen 1 2' or 'john 3 16')"
                     value={fastSearchQuery}
-                    onChange={(e) => handleFastSearch(e.target.value)}
+                    onChange={(e) => handleFastSearch(e.target.value, false)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleFastSearch(fastSearchQuery, true);
+                    }}
                   />
                 </div>
                 <div style={{ display: "flex", gap: "8px" }}>
@@ -1423,6 +1510,7 @@ export default function ControlPanel() {
                       return (
                         <div
                           key={verse.number}
+                          id={`verse-${verse.number}`}
                           onClick={() => handleProjectVerse(verse)}
                           style={{
                             padding: "12px",
@@ -1514,6 +1602,7 @@ export default function ControlPanel() {
                         return (
                           <div
                             key={index}
+                            id={`song-chunk-${index}`}
                             onClick={() => handleProjectSongChunk(chunk, index)}
                             style={{
                               containerType: "inline-size",
@@ -1564,50 +1653,42 @@ export default function ControlPanel() {
 
           {/* Settings & Live Controls */}
           <div className="live-controls-bar">
-            <div className="nav-row">
+            <div className="nav-row" style={{ justifyContent: 'flex-start', gap: '12px' }}>
               <button
-                className="btn btn-secondary"
-                style={{ background: "#444", padding: "0 6px" }}
+                className="btn"
+                style={{
+                  background: "transparent",
+                  border: "1px solid var(--border-subtle)",
+                  color: "white",
+                  padding: "8px 24px",
+                  fontWeight: 600,
+                  borderRadius: "8px",
+                  transition: "all 0.2s"
+                }}
                 onClick={handleClear}
+                onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
               >
-                Clear
+                Clear (Esc)
               </button>
               <button
                 className="btn btn-primary"
                 style={{
-                  whiteSpace: "nowrap",
-                  padding: "0 14px",
-                  minWidth: "126px",
-                  background: "#dc2626",
-                  borderColor: "#dc2626",
+                  background: "var(--primary)",
+                  borderColor: "var(--primary)",
+                  padding: "8px 32px",
+                  fontWeight: "bold",
+                  fontSize: "1.1rem",
+                  borderRadius: "8px",
+                  boxShadow: "0 4px 12px rgba(79, 70, 229, 0.4)",
+                  transition: "transform 0.2s",
                 }}
                 onClick={() => {}}
+                onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.05)"}
+                onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
               >
                 Project Live
               </button>
-              <div
-                style={{
-                  position: "relative",
-                  display: "flex",
-                  alignItems: "center",
-                  minWidth: 0,
-                  flex: 1,
-                }}
-              >
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  style={{
-                    width: "100%",
-                    background: "var(--panel-content-bg)",
-                    border: "1px solid var(--border-subtle)",
-                    color: "var(--text-primary)",
-                    padding: "8px 64px 8px 12px",
-                    borderRadius: "8px",
-                    fontSize: "12px",
-                  }}
-                />
-              </div>
             </div>
 
             <div className="main-panel-stacks">
@@ -2073,7 +2154,9 @@ export default function ControlPanel() {
                         fontSize: `${(liveState.type === "bible" ? liveState.bibleFontSize : liveState.songFontSize) * (liveState.layout === "LT" ? 0.6 : 1)}cqi`,
                         textTransform:
                           liveState.type === "song"
-                            ? liveState.textTransform
+                            ? liveState.songTextTransform
+                            : liveState.type === "bible"
+                            ? liveState.bibleTextTransform
                             : "none",
                         color: liveState.textColor,
                         width: "100%",
@@ -2142,6 +2225,18 @@ export default function ControlPanel() {
             </div>
           </div>
         </aside>
+      </div>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <div className="mobile-nav-bar">
+        <button className="mobile-nav-btn" onClick={goToPrev}>
+          <ChevronLeft size={24} />
+          <span>Previous</span>
+        </button>
+        <button className="mobile-nav-btn" onClick={goToNext}>
+          <span>Next</span>
+          <ChevronRight size={24} />
+        </button>
       </div>
     </div>
   );
