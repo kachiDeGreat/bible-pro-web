@@ -27,8 +27,8 @@ export default function ControlPanel() {
   );
   const [lyrics, setLyrics] = useState("");
 
-  const [sidebarWidth, setSidebarWidth] = useState(280);
-  const [programWidth, setProgramWidth] = useState(450);
+  const [sidebarWidth, setSidebarWidth] = useState(380);
+  const [programWidth, setProgramWidth] = useState(550);
   const isResizingSidebar = useRef(false);
   const isResizingProgram = useRef(false);
 
