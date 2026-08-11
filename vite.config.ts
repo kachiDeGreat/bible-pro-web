@@ -1,5 +1,6 @@
 import { defineConfig, ViteDevServer } from 'vite'
 import react from '@vitejs/plugin-react'
+import { qrcode } from 'vite-plugin-qrcode'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
@@ -157,10 +158,28 @@ function localMediaServer() {
 }
 
 // https://vite.dev/config/
+const interfaces = os.networkInterfaces();
+let localIp = 'localhost';
+for (const devName in interfaces) {
+  const iface = interfaces[devName];
+  if (!iface) continue;
+  for (let i = 0; i < iface.length; i++) {
+    const alias = iface[i];
+    if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal) {
+      // Prioritize Wi-Fi or Ethernet over VirtualBox/VMware adapters if possible, but this is simple enough
+      if (!devName.toLowerCase().includes('vEthernet') && !devName.toLowerCase().includes('vmware') && !devName.toLowerCase().includes('virtual')) {
+        localIp = alias.address;
+      }
+    }
+  }
+}
+
 export default defineConfig({
-  plugins: [react(), localMediaServer()],
+  plugins: [react(), localMediaServer(), qrcode()],
   server: {
     host: true, // Listen on all local IPs (needed for mobile phone to connect)
-    open: true, // Automatically open the browser when started
+    open: `http://${localIp}:5173`, // Automatically open the browser to the network IP
+    port: 5173,
+    strictPort: true
   }
 })

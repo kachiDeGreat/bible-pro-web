@@ -27,6 +27,7 @@
     "formidable": "^3.5.4",
     "oxlint": "^1.75.0",
     "typescript": "^7.0.2",
-    "vite": "^8.2.0"
+    "vite": "^8.2.0",
+    "vite-plugin-qrcode": "^0.4.1"
   }
 }
