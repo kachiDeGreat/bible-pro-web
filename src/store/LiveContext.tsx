@@ -28,6 +28,10 @@ export interface LiveState {
   refFontWeight: string;
   paddingLR: number;
   lowerThirdWidth: number;
+  enableLowerThirdBg: boolean;
+  lowerThirdBgColor: string;
+  lowerThirdBgOpacity: number;
+  lowerThirdPadding: number;
   refColor: string;
   textColor: string;
 }
@@ -67,6 +71,10 @@ const defaultState: LiveState = {
   refFontWeight: 'bold',
   paddingLR: 5,
   lowerThirdWidth: 78,
+  enableLowerThirdBg: true,
+  lowerThirdBgColor: '#000000',
+  lowerThirdBgOpacity: 50,
+  lowerThirdPadding: 3,
   refColor: '#FFFFFF',
   textColor: '#FFFFFF'
 };

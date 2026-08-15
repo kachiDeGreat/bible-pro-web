@@ -140,5 +140,32 @@ export const bibleService = {
 
     await this.saveBible(bibleVersion);
     return bibleVersion;
+  },
+
+  async getAvailableServerBibles(): Promise<string[]> {
+    try {
+      const res = await fetch('/api/bibles/list');
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch(e) {
+      console.error("Failed to fetch available bibles", e);
+    }
+    return [];
+  },
+
+  async loadBibleFromServer(filename: string): Promise<BibleVersion | null> {
+    try {
+      const res = await fetch(`/api/bibles/file?name=${filename}`);
+      if (res.ok) {
+        const xmlText = await res.text();
+        const id = "bible_" + filename.replace('.xml', '');
+        const name = filename.replace('.xml', '');
+        return await this.parseZefaniaXML(xmlText, id, name);
+      }
+    } catch(e) {
+      console.error("Failed to load bible from server", e);
+    }
+    return null;
   }
 };

@@ -21,6 +21,14 @@ import { bibleService, BibleVersion, Verse } from "../services/bibleService";
 import { useLive } from "../store/LiveContext";
 import { getSongs, saveMedia, addSong, deleteSong } from "../services/dbService";
 
+const getRgba = (hex: string, opacity: number) => {
+  if (!hex) return `rgba(0, 0, 0, ${opacity / 100})`;
+  const r = parseInt(hex.slice(1, 3), 16) || 0;
+  const g = parseInt(hex.slice(3, 5), 16) || 0;
+  const b = parseInt(hex.slice(5, 7), 16) || 0;
+  return `rgba(${r}, ${g}, ${b}, ${opacity / 100})`;
+};
+
 export default function ControlPanel() {
   const [isLoading, setIsLoading] = useState(true);
   const [savedSongs, setSavedSongs] = useState<any[]>([]);
@@ -39,6 +47,8 @@ export default function ControlPanel() {
 
   // Bible State
   const [bibles, setBibles] = useState<BibleVersion[]>([]);
+  const [availableServerBibles, setAvailableServerBibles] = useState<string[]>([]);
+  const [bibleLoadingProgress, setBibleLoadingProgress] = useState<{current: number, total: number} | null>(null);
   const [selectedBibleId, setSelectedBibleId] = useState<string>("");
   const [selectedBookNum, setSelectedBookNum] = useState<number | "">("");
   const [selectedChapterNum, setSelectedChapterNum] = useState<number | "">("");
@@ -184,10 +194,79 @@ export default function ControlPanel() {
     };
   }, []);
 
+  const handleExportSettings = async () => {
+    try {
+      const songs = await getSongs();
+      const exportData = {
+        liveState,
+        songs
+      };
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `bible-song-pro-settings-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      import("react-hot-toast").then((module) => module.toast.success("Settings exported successfully!"));
+    } catch(e) {
+      import("react-hot-toast").then((module) => module.toast.error("Failed to export settings"));
+    }
+  };
+
+  const handleImportSettings = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const data = JSON.parse(event.target?.result as string);
+        if (data.liveState) {
+          projectLive(data.liveState);
+        }
+        if (data.songs && Array.isArray(data.songs)) {
+          for (const s of data.songs) {
+            await addSong(s.title, s.artist || "Unknown", s.lyrics);
+          }
+          loadSongs();
+        }
+        import("react-hot-toast").then((module) => module.toast.success("Settings and songs imported successfully!"));
+      } catch (err) {
+        import("react-hot-toast").then((module) => module.toast.error("Invalid JSON file"));
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const loadBibles = async () => {
     try {
-      const loadedBibles = await bibleService.getAllBibles();
+      let loadedBibles = await bibleService.getAllBibles();
       setBibles(loadedBibles);
+      
+      const serverBibles = await bibleService.getAvailableServerBibles();
+      
+      const toLoad = serverBibles.filter(filename => !loadedBibles.some(b => b.id === "bible_" + filename.replace('.xml', '')));
+      
+      if (toLoad.length > 0) {
+        setBibleLoadingProgress({ current: 0, total: toLoad.length });
+        for (let i = 0; i < toLoad.length; i++) {
+          const filename = toLoad[i];
+          try {
+            const parsed = await bibleService.loadBibleFromServer(filename);
+            if (parsed) {
+              loadedBibles = [...loadedBibles, parsed];
+              setBibles(loadedBibles);
+            }
+          } catch(e) {
+            console.error(`Failed to load ${filename}`, e);
+          }
+          setBibleLoadingProgress({ current: i + 1, total: toLoad.length });
+        }
+        setBibleLoadingProgress(null);
+      }
+
+      setAvailableServerBibles(serverBibles);
+
       if (loadedBibles.length > 0 && !selectedBibleId) {
         setSelectedBibleId(loadedBibles[0].id);
       }
@@ -385,7 +464,7 @@ export default function ControlPanel() {
     clearLive();
   };
 
-  const handleVersionChange = (newBibleId: string) => {
+  const handleVersionChange = async (newBibleId: string) => {
     setSelectedBibleId(newBibleId);
     if (liveState.type === "bible" && activeProjectedRef) {
       const newBible = bibles.find((b) => b.id === newBibleId);
@@ -866,6 +945,63 @@ export default function ControlPanel() {
                     }
                   />
                 </div>
+
+                <div className="control-group" style={{ gridColumn: "1 / -1" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "8px", color: "white", cursor: "pointer" }}>
+                    <input
+                      type="checkbox"
+                      checked={liveState.enableLowerThirdBg}
+                      onChange={(e) => projectLive({ enableLowerThirdBg: e.target.checked })}
+                    />
+                    Enable Lower Third Background
+                  </label>
+                </div>
+                
+                <div className="control-group">
+                  <span className="control-label">Lower Third Bg Color</span>
+                  <input
+                    type="color"
+                    className="input"
+                    style={{ padding: '0', height: '40px' }}
+                    value={liveState.lowerThirdBgColor || '#000000'}
+                    onChange={(e) =>
+                      projectLive({ lowerThirdBgColor: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="control-group">
+                  <span className="control-label">Lower Third Bg Opacity (%)</span>
+                  <input
+                    type="range"
+                    style={{ width: "100%" }}
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={liveState.lowerThirdBgOpacity ?? 50}
+                    onChange={(e) =>
+                      projectLive({ lowerThirdBgOpacity: Number(e.target.value) })
+                    }
+                  />
+                  <div style={{ textAlign: "right", fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                    {liveState.lowerThirdBgOpacity ?? 50}%
+                  </div>
+                </div>
+
+                <div className="control-group" style={{ gridColumn: "1 / -1" }}>
+                  <span className="control-label">Lower Third Top/Bottom Padding (vw)</span>
+                  <input
+                    type="number"
+                    className="input"
+                    min="0"
+                    max="20"
+                    step="0.5"
+                    value={liveState.lowerThirdPadding ?? 3}
+                    onChange={(e) =>
+                      projectLive({ lowerThirdPadding: Number(e.target.value) })
+                    }
+                  />
+                </div>
               </div>
 
               <div
@@ -941,6 +1077,26 @@ export default function ControlPanel() {
                   </div>
                 </div>
               </div>
+
+              <div
+                style={{
+                  borderTop: "1px solid var(--border-subtle)",
+                  marginTop: "20px",
+                  paddingTop: "20px"
+                }}
+              >
+                <h4 style={{ color: "white", marginBottom: "16px" }}>Backup & Restore</h4>
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button className="btn btn-primary" onClick={handleExportSettings}>
+                    Export Settings & Songs
+                  </button>
+                  <label className="btn btn-secondary" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    Import Settings JSON
+                    <input type="file" accept=".json" hidden onChange={handleImportSettings} />
+                  </label>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
@@ -1035,6 +1191,11 @@ export default function ControlPanel() {
                   >
                     <Database size={12} /> Local Bible Database
                   </h4>
+                  {bibleLoadingProgress && (
+                    <div style={{ fontSize: "0.85rem", color: "var(--secondary)", marginBottom: "8px", display: "flex", alignItems: "center", gap: "8px" }}>
+                      <Loader size={14} style={{ animation: 'spin 2s linear infinite' }} /> Loading Bibles... ({bibleLoadingProgress.current}/{bibleLoadingProgress.total})
+                    </div>
+                  )}
                   {bibles.length === 0 ? (
                     <div
                       style={{
@@ -1413,6 +1574,7 @@ export default function ControlPanel() {
                 }}
                 value={selectedBibleId}
                 onChange={(e) => handleVersionChange(e.target.value)}
+                disabled={bibleLoadingProgress !== null}
               >
                 <option value="">Select Version...</option>
                 {bibles.map((b) => (
@@ -2099,7 +2261,7 @@ export default function ControlPanel() {
                   }}
                 >
                   <div
-                    className={`projected-box bg-${liveState.transparentBackground ? "transparent" : "normal"} anim-${liveState.animation} shadow-${liveState.shadow}`}
+                    className={`projected-box bg-${(liveState.layout === 'LT' ? !liveState.enableLowerThirdBg : liveState.transparentBackground) ? "transparent" : "normal"} anim-${liveState.animation} shadow-${liveState.shadow}`}
                     style={{
                       width:
                         liveState.layout === "LT"
@@ -2110,12 +2272,10 @@ export default function ControlPanel() {
                           ? liveState.transparentBackground
                             ? "4cqi"
                             : "6cqi"
-                          : "3cqi 4cqi",
+                          : `${liveState.lowerThirdPadding ?? 3}cqi 4cqi`,
                       background:
                         liveState.layout === "LT"
-                          ? liveState.transparentBackground
-                            ? "transparent"
-                            : liveState.backgroundColor
+                          ? (!liveState.enableLowerThirdBg ? "transparent" : getRgba(liveState.lowerThirdBgColor || '#000000', liveState.lowerThirdBgOpacity ?? 50))
                           : "transparent",
                       flexDirection: "column",
                       alignItems: "center",

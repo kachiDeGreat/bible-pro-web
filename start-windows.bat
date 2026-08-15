@@ -22,13 +22,13 @@ if not exist "node_modules\" (
 echo [INFO] Starting the local server...
 echo [INFO] A browser window should open automatically with your local network IP.
 echo [INFO] To access this on your phone:
-echo        1. Connect your phone to the same Wi-Fi or Hotspot as this computer.
-echo        2. Scan the QR code that appears below.
-echo        3. Or, type the "Network" URL shown below into your phone's browser.
+echo [INFO] 1. Connect your phone to the same Wi-Fi or Hotspot as this computer.
+echo [INFO] 2. Scan the QR code that appears below.
+echo [INFO] 3. Or, type the "Network" URL shown below into your phone's browser.
 echo.
 echo [IMPORTANT] If it doesn't load on your phone, Windows Firewall might be blocking it.
-echo             When prompted, make sure to allow Node.js to communicate on "Private" AND "Public" networks.
-echo             (Hotspots are often categorized as Public networks by Windows).
+echo [IMPORTANT] When prompted, make sure to allow Node.js to communicate on "Private" AND "Public" networks.
+echo [IMPORTANT] (Hotspots are often categorized as Public networks by Windows).
 echo.
 echo [INFO] Keep this window open while using the software.
 echo ==============================================

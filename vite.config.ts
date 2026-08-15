@@ -147,6 +147,52 @@ function localMediaServer() {
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ ip: localIp }));
       });
+
+      server.middlewares.use('/api/bibles/list', (req, res) => {
+        if (req.method === 'GET') {
+          const bibleDir = path.resolve(process.cwd(), 'BIBLE');
+          if (fs.existsSync(bibleDir)) {
+            const files = fs.readdirSync(bibleDir).filter(f => f.endsWith('.xml'));
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(files));
+          } else {
+            res.statusCode = 404;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: 'BIBLE directory not found' }));
+          }
+        }
+      });
+
+      server.middlewares.use('/api/bibles/file', (req, res) => {
+        if (req.method === 'GET') {
+          const urlParts = req.url?.split('?');
+          if (!urlParts || urlParts.length < 2) {
+            res.statusCode = 400;
+            res.end('Missing query parameter ?name=');
+            return;
+          }
+          const queryParams = new URLSearchParams(urlParts[1]);
+          const fileName = queryParams.get('name');
+          
+          if (!fileName || !fileName.endsWith('.xml')) {
+            res.statusCode = 400;
+            res.end('Invalid file name');
+            return;
+          }
+          
+          const filePath = path.resolve(process.cwd(), 'BIBLE', fileName);
+          if (fs.existsSync(filePath)) {
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/xml');
+            const stream = fs.createReadStream(filePath);
+            stream.pipe(res);
+          } else {
+            res.statusCode = 404;
+            res.end('File not found');
+          }
+        }
+      });
     },
   }
 }
@@ -172,8 +218,8 @@ export default defineConfig({
   plugins: [react(), localMediaServer(), qrcode()],
   server: {
     host: true, 
-    open: `http://${localIp}:5177`,
-    port: 5177,
+    open: `http://${localIp}:3000`,
+    port: 3000,
     strictPort: true
   }
 })

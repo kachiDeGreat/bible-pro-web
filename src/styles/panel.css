@@ -355,21 +355,39 @@
 }
 
 /* Animations */
-.anim-fade { animation: fadeIn 0.4s ease; }
-.anim-slide { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-.anim-zoom { animation: zoomIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+.anim-fade-in { animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.anim-slide-in { animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.anim-zoom-in { animation: zoomIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+.anim-fade-out { animation: fadeOut 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.anim-slide-out { animation: slideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.anim-zoom-out { animation: zoomOut 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; filter: blur(8px); }
+  to { opacity: 1; filter: blur(0px); }
 }
+@keyframes fadeOut {
+  from { opacity: 1; filter: blur(0px); }
+  to { opacity: 0; filter: blur(8px); }
+}
+
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(10cqi); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(4cqi); filter: blur(4px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0px); }
 }
+@keyframes slideDown {
+  from { opacity: 1; transform: translateY(0); filter: blur(0px); }
+  to { opacity: 0; transform: translateY(-4cqi); filter: blur(4px); }
+}
+
 @keyframes zoomIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from { opacity: 0; transform: scale(0.9); filter: blur(6px); }
+  to { opacity: 1; transform: scale(1); filter: blur(0px); }
+}
+@keyframes zoomOut {
+  from { opacity: 1; transform: scale(1); filter: blur(0px); }
+  to { opacity: 0; transform: scale(1.1); filter: blur(6px); }
 }
 
 /* Modals */
