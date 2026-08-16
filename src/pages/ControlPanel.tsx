@@ -2156,46 +2156,30 @@ export default function ControlPanel() {
 
               <div className="control-stack">
                 <span className="control-stack-label">Text Shadow</span>
-                <div
-                  className="segmented-picker"
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr",
-                    gap: "2px",
-                    width: "100%",
-                  }}
-                >
-                  <button
-                    className={`seg-btn ${liveState.shadow === "none" ? "active" : ""}`}
-                    onClick={() => projectLive({ shadow: "none" })}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      width: "100%",
+                      padding: "4px 8px",
+                      background: "rgba(15, 23, 42, 0.5)",
+                      border: "1px solid var(--border-subtle)",
+                      borderRadius: "6px"
+                    }}
                   >
-                    None
-                  </button>
-                  <button
-                    className={`seg-btn ${liveState.shadow === "light" ? "active" : ""}`}
-                    onClick={() => projectLive({ shadow: "light" })}
-                  >
-                    Light
-                  </button>
-                  <button
-                    className={`seg-btn ${liveState.shadow === "mid" ? "active" : ""}`}
-                    onClick={() => projectLive({ shadow: "mid" })}
-                  >
-                    Mid
-                  </button>
-                  <button
-                    className={`seg-btn ${liveState.shadow === "heavy" ? "active" : ""}`}
-                    onClick={() => projectLive({ shadow: "heavy" })}
-                  >
-                    Heavy
-                  </button>
-                  <button
-                    className={`seg-btn ${liveState.shadow === "extra" ? "active" : ""}`}
-                    onClick={() => projectLive({ shadow: "extra" })}
-                  >
-                    Max
-                  </button>
-                </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={liveState.shadowIntensity ?? 80}
+                      onChange={(e) => projectLive({ shadowIntensity: parseInt(e.target.value) })}
+                      style={{ width: "100%" }}
+                    />
+                    <span style={{ fontSize: "0.75rem", color: "white", minWidth: "24px" }}>
+                      {liveState.shadowIntensity ?? 80}%
+                    </span>
+                  </div>
               </div>
             </div>
           </div>
@@ -2303,12 +2287,14 @@ export default function ControlPanel() {
                 >
                   <div
                     className={`projected-box bg-${
-                      (liveState.layout === "LT" ? !liveState.enableLowerThirdBg : liveState.transparentBackground)
+                      liveState.type === "song"
+                        ? "transparent"
+                        : (liveState.layout === "LT" ? !liveState.enableLowerThirdBg : liveState.transparentBackground)
                         ? "transparent"
                         : liveState.layout === "LT" && liveState.type === "bible" && liveState.bibleLowerThirdStyle === "torn-edge"
                         ? "torn-edge"
                         : "normal"
-                    } anim-${liveState.animation} shadow-${liveState.shadow}`}
+                    } anim-${liveState.animation}`}
                     style={{
                       width:
                         liveState.layout === "LT"
@@ -2324,6 +2310,9 @@ export default function ControlPanel() {
                         liveState.layout === "LT"
                           ? (!liveState.enableLowerThirdBg ? "transparent" : getRgba(liveState.lowerThirdBgColor || '#000000', liveState.lowerThirdBgOpacity ?? 50))
                           : "transparent",
+                      textShadow: (liveState.type === "song" || (liveState.layout === "LT" ? !liveState.enableLowerThirdBg : liveState.transparentBackground)) && (liveState.shadowIntensity || 0) > 0 
+                        ? `0 ${(liveState.shadowIntensity || 0) * 0.015}cqi ${(liveState.shadowIntensity || 0) * 0.03}cqi rgba(0,0,0,${Math.min((liveState.shadowIntensity || 0) * 0.012, 1)}), 0 ${(liveState.shadowIntensity || 0) * 0.005}cqi ${(liveState.shadowIntensity || 0) * 0.01}cqi rgba(0,0,0,${Math.min((liveState.shadowIntensity || 0) * 0.008, 1)})`
+                        : "none",
                       flexDirection: "column",
                       alignItems: "center",
                       justifyContent:

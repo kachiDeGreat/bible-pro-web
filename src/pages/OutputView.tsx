@@ -70,13 +70,17 @@ const OutputView = () => {
   const renderProjectedContent = (state: any, isOutgoing: boolean) => {
     if (!state || state.type === 'clear') return null;
     
-    const isBgTransparent = state.layout === 'LT' ? !state.enableLowerThirdBg : state.transparentBackground;
+    const isBgTransparent = state.type === 'song' ? true : (state.layout === 'LT' ? !state.enableLowerThirdBg : state.transparentBackground);
     const animClass = isOutgoing ? `anim-${state.animation}-out` : `anim-${state.animation}-in`;
     
     let bgClass = isBgTransparent ? 'transparent' : 'normal';
     if (!isBgTransparent && state.layout === 'LT' && state.type === 'bible' && state.bibleLowerThirdStyle === 'torn-edge') {
       bgClass = 'torn-edge';
     }
+
+    const shadowVal = isBgTransparent && state.shadowIntensity > 0 
+      ? `0 ${state.shadowIntensity * 0.015}vw ${state.shadowIntensity * 0.03}vw rgba(0,0,0,${Math.min(state.shadowIntensity * 0.012, 1)}), 0 ${state.shadowIntensity * 0.005}vw ${state.shadowIntensity * 0.01}vw rgba(0,0,0,${Math.min(state.shadowIntensity * 0.008, 1)})`
+      : 'none';
 
     return (
       <div
@@ -94,12 +98,13 @@ const OutputView = () => {
         }}
       >
         <div 
-          className={`projected-box bg-${bgClass} ${state.animation !== 'none' ? animClass : ''} shadow-${state.shadow}`}
+          className={`projected-box bg-${bgClass} ${state.animation !== 'none' ? animClass : ''}`}
           style={{ 
             width: state.layout === 'LT' ? `${state.lowerThirdWidth}%` : '100%',
             height: state.layout === 'FS' ? '100%' : 'auto',
             padding: state.layout === 'FS' ? (state.transparentBackground ? '4vw' : '6vw') : `${state.lowerThirdPadding ?? 3}vw 4vw`,
             background: state.layout === 'LT' ? (bgClass === 'transparent' ? 'transparent' : getRgba(state.lowerThirdBgColor || '#000000', state.lowerThirdBgOpacity ?? 50)) : 'transparent',
+            textShadow: shadowVal,
             display: 'flex',
             flexDirection: 'column',
             alignItems: state.horizontalAlign === 'left' ? 'flex-start' : state.horizontalAlign === 'right' ? 'flex-end' : 'center',

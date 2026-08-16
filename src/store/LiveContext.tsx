@@ -12,7 +12,7 @@ export interface LiveState {
   horizontalAlign: 'left' | 'center' | 'right';
   layout: 'FS' | 'LT';
   animation: 'none' | 'fade' | 'slide' | 'zoom';
-  shadow: 'none' | 'light' | 'mid' | 'heavy' | 'extra';
+  shadowIntensity: number;
   transparentBackground: boolean;
   fontFamily: string;
   bibleFontSize: number;
@@ -56,7 +56,7 @@ const defaultState: LiveState = {
   horizontalAlign: 'center',
   layout: 'FS', // Change default to FS for a better initial experience
   animation: 'fade',
-  shadow: 'heavy',
+  shadowIntensity: 80,
   transparentBackground: false,
   fontFamily: 'Inter',
   bibleFontSize: 4.5,
