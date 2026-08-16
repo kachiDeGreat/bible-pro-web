@@ -338,7 +338,17 @@
 /* Shadows */
 .shadow-none { text-shadow: none; }
 .shadow-light { text-shadow: 0 0.5cqi 1cqi rgba(0,0,0,0.6); }
+.shadow-mid { text-shadow: 0 0.75cqi 1.5cqi rgba(0,0,0,0.8), 0 0.3cqi 0.8cqi rgba(0,0,0,0.5); }
 .shadow-heavy { text-shadow: 0 1cqi 2cqi rgba(0,0,0,0.9), 0 0.5cqi 1cqi rgba(0,0,0,0.7); }
+.shadow-extra { text-shadow: 0 1.5cqi 3cqi rgba(0,0,0,1), 0 0.8cqi 2cqi rgba(0,0,0,0.8), 0 0 1cqi rgba(0,0,0,0.5); }
+
+/* Torn Edge Effect for Lower Thirds */
+.bg-torn-edge {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none' viewBox='0 0 100 100'%3E%3Cpath d='M2,2 L98,3 L97,97 L3,98 Z' filter='url(%23rough)' fill='black'/%3E%3Cfilter id='rough'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.2' numOctaves='3' result='noise'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='noise' scale='4' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none' viewBox='0 0 100 100'%3E%3Cpath d='M2,2 L98,3 L97,97 L3,98 Z' filter='url(%23rough)' fill='black'/%3E%3Cfilter id='rough'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.2' numOctaves='3' result='noise'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='noise' scale='4' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3C/svg%3E");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
 
 .projected-title {
   font-weight: bold;

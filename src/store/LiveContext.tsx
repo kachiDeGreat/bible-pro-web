@@ -12,7 +12,7 @@ export interface LiveState {
   horizontalAlign: 'left' | 'center' | 'right';
   layout: 'FS' | 'LT';
   animation: 'none' | 'fade' | 'slide' | 'zoom';
-  shadow: 'none' | 'light' | 'heavy';
+  shadow: 'none' | 'light' | 'mid' | 'heavy' | 'extra';
   transparentBackground: boolean;
   fontFamily: string;
   bibleFontSize: number;
@@ -32,6 +32,7 @@ export interface LiveState {
   lowerThirdBgColor: string;
   lowerThirdBgOpacity: number;
   lowerThirdPadding: number;
+  bibleLowerThirdStyle: 'standard' | 'torn-edge';
   refColor: string;
   textColor: string;
 }
@@ -75,6 +76,7 @@ const defaultState: LiveState = {
   lowerThirdBgColor: '#000000',
   lowerThirdBgOpacity: 50,
   lowerThirdPadding: 3,
+  bibleLowerThirdStyle: 'standard',
   refColor: '#FFFFFF',
   textColor: '#FFFFFF'
 };

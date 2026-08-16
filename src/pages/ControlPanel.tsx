@@ -1934,6 +1934,35 @@ export default function ControlPanel() {
                     LT
                   </button>
                 </div>
+                {liveState.layout === 'LT' && (
+                  <div
+                    className="segmented-picker"
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "2px",
+                      width: "100%",
+                      marginTop: "4px"
+                    }}
+                  >
+                    <button
+                      className={`seg-btn ${liveState.bibleLowerThirdStyle === "standard" ? "active" : ""}`}
+                      onClick={() => projectLive({ bibleLowerThirdStyle: "standard" })}
+                      title="Standard Lower Third"
+                      style={{ fontSize: "0.7rem", padding: "4px" }}
+                    >
+                      Std
+                    </button>
+                    <button
+                      className={`seg-btn ${liveState.bibleLowerThirdStyle === "torn-edge" ? "active" : ""}`}
+                      onClick={() => projectLive({ bibleLowerThirdStyle: "torn-edge" })}
+                      title="Torn Edge Background"
+                      style={{ fontSize: "0.7rem", padding: "4px" }}
+                    >
+                      Torn
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="control-stack">
@@ -2149,10 +2178,22 @@ export default function ControlPanel() {
                     Light
                   </button>
                   <button
+                    className={`seg-btn ${liveState.shadow === "mid" ? "active" : ""}`}
+                    onClick={() => projectLive({ shadow: "mid" })}
+                  >
+                    Mid
+                  </button>
+                  <button
                     className={`seg-btn ${liveState.shadow === "heavy" ? "active" : ""}`}
                     onClick={() => projectLive({ shadow: "heavy" })}
                   >
                     Heavy
+                  </button>
+                  <button
+                    className={`seg-btn ${liveState.shadow === "extra" ? "active" : ""}`}
+                    onClick={() => projectLive({ shadow: "extra" })}
+                  >
+                    Max
                   </button>
                 </div>
               </div>
@@ -2261,7 +2302,13 @@ export default function ControlPanel() {
                   }}
                 >
                   <div
-                    className={`projected-box bg-${(liveState.layout === 'LT' ? !liveState.enableLowerThirdBg : liveState.transparentBackground) ? "transparent" : "normal"} anim-${liveState.animation} shadow-${liveState.shadow}`}
+                    className={`projected-box bg-${
+                      (liveState.layout === "LT" ? !liveState.enableLowerThirdBg : liveState.transparentBackground)
+                        ? "transparent"
+                        : liveState.layout === "LT" && liveState.type === "bible" && liveState.bibleLowerThirdStyle === "torn-edge"
+                        ? "torn-edge"
+                        : "normal"
+                    } anim-${liveState.animation} shadow-${liveState.shadow}`}
                     style={{
                       width:
                         liveState.layout === "LT"

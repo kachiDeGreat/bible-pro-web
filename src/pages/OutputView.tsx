@@ -72,6 +72,11 @@ const OutputView = () => {
     
     const isBgTransparent = state.layout === 'LT' ? !state.enableLowerThirdBg : state.transparentBackground;
     const animClass = isOutgoing ? `anim-${state.animation}-out` : `anim-${state.animation}-in`;
+    
+    let bgClass = isBgTransparent ? 'transparent' : 'normal';
+    if (!isBgTransparent && state.layout === 'LT' && state.type === 'bible' && state.bibleLowerThirdStyle === 'torn-edge') {
+      bgClass = 'torn-edge';
+    }
 
     return (
       <div
@@ -89,12 +94,12 @@ const OutputView = () => {
         }}
       >
         <div 
-          className={`projected-box bg-${isBgTransparent ? 'transparent' : 'normal'} ${state.animation !== 'none' ? animClass : ''} shadow-${state.shadow}`}
+          className={`projected-box bg-${bgClass} ${state.animation !== 'none' ? animClass : ''} shadow-${state.shadow}`}
           style={{ 
             width: state.layout === 'LT' ? `${state.lowerThirdWidth}%` : '100%',
             height: state.layout === 'FS' ? '100%' : 'auto',
             padding: state.layout === 'FS' ? (state.transparentBackground ? '4vw' : '6vw') : `${state.lowerThirdPadding ?? 3}vw 4vw`,
-            background: state.layout === 'LT' ? (isBgTransparent ? 'transparent' : getRgba(state.lowerThirdBgColor || '#000000', state.lowerThirdBgOpacity ?? 50)) : 'transparent',
+            background: state.layout === 'LT' ? (bgClass === 'transparent' ? 'transparent' : getRgba(state.lowerThirdBgColor || '#000000', state.lowerThirdBgOpacity ?? 50)) : 'transparent',
             display: 'flex',
             flexDirection: 'column',
             alignItems: state.horizontalAlign === 'left' ? 'flex-start' : state.horizontalAlign === 'right' ? 'flex-end' : 'center',
