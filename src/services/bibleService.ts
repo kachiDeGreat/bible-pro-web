@@ -81,36 +81,64 @@ export const bibleService = {
     });
   },
 
-  // Parses Zefania XML format
+  // Parses Zefania XML format and other common formats (e.g. AMPC, BSB)
   async parseZefaniaXML(xmlString: string, id: string, name: string): Promise<BibleVersion> {
+    const cleanXml = xmlString.trim().replace(/^\uFEFF/, '');
     const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+    const xmlDoc = parser.parseFromString(cleanXml, "text/xml");
     
     if (xmlDoc.getElementsByTagName('parsererror').length > 0) {
       throw new Error("Invalid XML format");
     }
 
-    const booksElement = xmlDoc.getElementsByTagName('BIBLEBOOK');
+    let booksElement = xmlDoc.getElementsByTagName('BIBLEBOOK');
+    if (booksElement.length === 0) {
+      booksElement = xmlDoc.getElementsByTagName('book');
+    }
     const parsedBooks: Book[] = [];
+
+    const standardBookNames = [
+      "Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy", "Joshua", "Judges", "Ruth",
+      "1 Samuel", "2 Samuel", "1 Kings", "2 Kings", "1 Chronicles", "2 Chronicles", "Ezra", "Nehemiah",
+      "Esther", "Job", "Psalms", "Proverbs", "Ecclesiastes", "Song of Solomon", "Isaiah", "Jeremiah",
+      "Lamentations", "Ezekiel", "Daniel", "Hosea", "Joel", "Amos", "Obadiah", "Jonah", "Micah",
+      "Nahum", "Habakkuk", "Zephaniah", "Haggai", "Zechariah", "Malachi",
+      "Matthew", "Mark", "Luke", "John", "Acts", "Romans", "1 Corinthians", "2 Corinthians",
+      "Galatians", "Ephesians", "Philippians", "Colossians", "1 Thessalonians", "2 Thessalonians",
+      "1 Timothy", "2 Timothy", "Titus", "Philemon", "Hebrews", "James", "1 Peter", "2 Peter",
+      "1 John", "2 John", "3 John", "Jude", "Revelation"
+    ];
 
     for (let i = 0; i < booksElement.length; i++) {
       const bookNode = booksElement[i];
-      const bNumber = parseInt(bookNode.getAttribute('bnumber') || `${i + 1}`);
-      const bName = bookNode.getAttribute('bname') || `Book ${bNumber}`;
+      const bNumberStr = bookNode.getAttribute('bnumber') || bookNode.getAttribute('number');
+      const bNumber = parseInt(bNumberStr || `${i + 1}`);
+      let bName = bookNode.getAttribute('bname') || bookNode.getAttribute('name');
+      if (!bName) {
+        bName = standardBookNames[bNumber - 1] || `Book ${bNumber}`;
+      }
       
-      const chaptersElement = bookNode.getElementsByTagName('CHAPTER');
+      let chaptersElement = bookNode.getElementsByTagName('CHAPTER');
+      if (chaptersElement.length === 0) {
+        chaptersElement = bookNode.getElementsByTagName('chapter');
+      }
       const parsedChapters: Chapter[] = [];
 
       for (let j = 0; j < chaptersElement.length; j++) {
         const chapterNode = chaptersElement[j];
-        const cNumber = parseInt(chapterNode.getAttribute('cnumber') || `${j + 1}`);
+        const cNumberStr = chapterNode.getAttribute('cnumber') || chapterNode.getAttribute('number');
+        const cNumber = parseInt(cNumberStr || `${j + 1}`);
         
-        const versesElement = chapterNode.getElementsByTagName('VERS');
+        let versesElement = chapterNode.getElementsByTagName('VERS');
+        if (versesElement.length === 0) {
+          versesElement = chapterNode.getElementsByTagName('verse');
+        }
         const parsedVerses: Verse[] = [];
 
         for (let k = 0; k < versesElement.length; k++) {
           const verseNode = versesElement[k];
-          const vNumber = parseInt(verseNode.getAttribute('vnumber') || `${k + 1}`);
+          const vNumberStr = verseNode.getAttribute('vnumber') || verseNode.getAttribute('number');
+          const vNumber = parseInt(vNumberStr || `${k + 1}`);
           const vText = verseNode.textContent || '';
           
           parsedVerses.push({

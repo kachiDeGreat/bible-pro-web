@@ -238,6 +238,53 @@ export default function ControlPanel() {
     reader.readAsText(file);
   };
 
+  const handleExportSongs = async () => {
+    try {
+      const songs = await getSongs();
+      const exportData = { songs };
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `bible-song-pro-songs-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      import("react-hot-toast").then((module) => module.toast.success("Songs exported successfully!"));
+    } catch(e) {
+      import("react-hot-toast").then((module) => module.toast.error("Failed to export songs"));
+    }
+  };
+
+  const handleImportSongs = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const data = JSON.parse(event.target?.result as string);
+        if (data.songs && Array.isArray(data.songs)) {
+          for (const s of data.songs) {
+            await addSong(s.title, s.artist || "Unknown", s.lyrics);
+          }
+          loadSongs();
+          import("react-hot-toast").then((module) => module.toast.success("Songs imported successfully!"));
+        } else if (Array.isArray(data)) {
+          for (const s of data) {
+            if (s.title && s.lyrics) await addSong(s.title, s.artist || "Unknown", s.lyrics);
+          }
+          loadSongs();
+          import("react-hot-toast").then((module) => module.toast.success("Songs imported successfully!"));
+        } else {
+          import("react-hot-toast").then((module) => module.toast.error("No songs found in file"));
+        }
+      } catch (err) {
+        import("react-hot-toast").then((module) => module.toast.error("Invalid JSON file"));
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   const loadBibles = async () => {
     try {
       let loadedBibles = await bibleService.getAllBibles();
@@ -1086,13 +1133,26 @@ export default function ControlPanel() {
                 }}
               >
                 <h4 style={{ color: "white", marginBottom: "16px" }}>Backup & Restore</h4>
-                <div style={{ display: "flex", gap: "10px" }}>
-                  <button className="btn btn-primary" onClick={handleExportSettings}>
-                    Export Settings & Songs
+                
+                <h5 style={{ color: "var(--text-muted)", marginBottom: "8px", fontSize: "0.85rem" }}>Settings & Songs</h5>
+                <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
+                  <button className="btn btn-secondary" onClick={handleExportSettings}>
+                    Export All
                   </button>
                   <label className="btn btn-secondary" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    Import Settings JSON
+                    Import All
                     <input type="file" accept=".json" hidden onChange={handleImportSettings} />
+                  </label>
+                </div>
+
+                <h5 style={{ color: "var(--text-muted)", marginBottom: "8px", fontSize: "0.85rem" }}>Songs Only</h5>
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button className="btn btn-primary" onClick={handleExportSongs}>
+                    Export Songs
+                  </button>
+                  <label className="btn btn-primary" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    Import Songs
+                    <input type="file" accept=".json" hidden onChange={handleImportSongs} />
                   </label>
                 </div>
               </div>
@@ -1217,14 +1277,23 @@ export default function ControlPanel() {
                       {bibles.map((b) => (
                         <div
                           key={b.id}
+                          onClick={() => handleVersionChange(b.id)}
                           style={{
                             padding: "8px 12px",
-                            background: "rgba(0,0,0,0.2)",
+                            background: selectedBibleId === b.id ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.2)",
                             borderRadius: "6px",
-                            border: "1px solid var(--border-subtle)",
+                            border: selectedBibleId === b.id ? "1px solid var(--primary)" : "1px solid var(--border-subtle)",
                             fontSize: "0.85rem",
                             display: "flex",
                             justifyContent: "space-between",
+                            cursor: "pointer",
+                            transition: "all 0.2s"
+                          }}
+                          onMouseEnter={(e) => {
+                            if (selectedBibleId !== b.id) e.currentTarget.style.borderColor = "var(--primary-hover)";
+                          }}
+                          onMouseLeave={(e) => {
+                            if (selectedBibleId !== b.id) e.currentTarget.style.borderColor = "var(--border-subtle)";
                           }}
                         >
                           <span
@@ -1563,27 +1632,7 @@ export default function ControlPanel() {
               </div>
             )}
 
-            {activeTab === "bible" && (
-              <select
-                className="input"
-                style={{
-                  width: "auto",
-                  padding: "4px 8px",
-                  fontSize: "0.85rem",
-                  maxWidth: "180px",
-                }}
-                value={selectedBibleId}
-                onChange={(e) => handleVersionChange(e.target.value)}
-                disabled={bibleLoadingProgress !== null}
-              >
-                <option value="">Select Version...</option>
-                {bibles.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name}
-                  </option>
-                ))}
-              </select>
-            )}
+
           </div>
 
           <div className="workspace-editor">
